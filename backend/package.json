@@ -14,7 +14,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@octokit/rest": "^22.0.1",
     "@prisma/client": "^6.19.3",
+    "axios": "^1.18.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",

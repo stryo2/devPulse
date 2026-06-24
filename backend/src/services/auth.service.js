@@ -3,33 +3,54 @@ import prisma from "../lib/prisma.js"
 import jwt from "jsonwebtoken"
 
 export const registerUser = async (email, password) => {
-
-  // check if user already exists
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      email
+  try {
+    // Validate inputs
+    if (!email || !password) {
+      throw new Error("Email and password are required")
     }
-  })
 
-  if (existingUser) {
-    throw new Error("User already exists")
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (existingUser) {
+      throw new Error("User already exists")
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword
+      }
+    })
+
+    // Generate token
+    const token = generateToken(user.id)
+
+    console.log("User registered successfully:", email)
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email
+      },
+      token
+    }
+  } catch (error) {
+    console.error("Registration error:", error.message)
+    throw error
   }
-
-  // hash password
-  const hashedPassword = await bcrypt.hash(password, 10)
-
-  // create user
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword
-    }
-  })
-
-  return user
 }
 
 export const generateToken = (userId) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET not configured")
+  }
 
   const token = jwt.sign(
     { id: userId },
@@ -39,35 +60,47 @@ export const generateToken = (userId) => {
 
   return token
 }
+
 export const loginUser = async (email, password) => {
-
-  // find user
-  const user = await prisma.user.findUnique({
-    where: {
-      email
+  try {
+    // Validate inputs
+    if (!email || !password) {
+      throw new Error("Email and password are required")
     }
-  })
 
-  if (!user) {
-    throw new Error("Invalid credentials")
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (!user) {
+      throw new Error("Invalid credentials")
+    }
+
+    // Compare passwords
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      user.password
+    )
+
+    if (!isPasswordCorrect) {
+      throw new Error("Invalid credentials")
+    }
+
+    // Generate token
+    const token = generateToken(user.id)
+
+    console.log("User logged in successfully:", email)
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email
+      }
+    }
+  } catch (error) {
+    console.error("Login error:", error.message)
+    throw error
   }
-
-  // compare passwords
-  const isPasswordCorrect = await bcrypt.compare(
-    password,
-    user.password
-  )
-
-  if (!isPasswordCorrect) {
-    throw new Error("Invalid credentials")
-  }
-
-  // generate token
-  const token = generateToken(user.id)
-
-  return {
-    token,
-    user
-  }
-
 }
