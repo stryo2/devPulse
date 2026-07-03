@@ -1,153 +1,103 @@
 import prisma from "../lib/prisma.js"
-
-
-
-import { GithubAdapter }
-from "../adapters/github.adapter.js"
-
-import { LeetcodeAdapter }
-from "../adapters/leetcode.adapter.js"
-
-import { CodeforcesAdapter }
-from "../adapters/codeforces.adapter.js"
-
-
-
-import {
-  normalizeGithubActivities
-}
-from "../normalizers/github.normalizer.js"
-
-import {
-  normalizeLeetcodeActivities
-}
-from "../normalizers/leetcode.normalizer.js"
-
-import {
-  normalizeCodeforcesActivities
-}
-from "../normalizers/codeforces.normalizer.js"
-
-
+import { GithubAdapter } from "../adapters/github.adapter.js"
+import { LeetcodeAdapter } from "../adapters/leetcode.adapter.js"
+import { CodeforcesAdapter } from "../adapters/codeforces.adapter.js"
+import { normalizeGithubActivities } from "../normalizers/github.normalizer.js"
+import { normalizeLeetcodeActivities } from "../normalizers/leetcode.normalizer.js"
+import { normalizeCodeforcesActivities } from "../normalizers/codeforces.normalizer.js"
 
 const github = new GithubAdapter()
-
 const leetcode = new LeetcodeAdapter()
-
 const codeforces = new CodeforcesAdapter()
 
-
-
-export const syncUserActivity = async () => {
-
+export const syncUserActivity = async (userId) => {
   try {
-
-    const githubConnection =
-  await prisma.connectedPlatform.findFirst({
-
-    where: {
-      platform: "github"
+    if (!userId) {
+      throw new Error("User id is required")
     }
 
-  })
-    // FETCH DATA FROM ALL PLATFORMS
-    const results = await Promise.allSettled([
+    const connections = await prisma.connectedPlatform.findMany({
+      where: { userId }
+    })
 
-      github.fetch( githubConnection.username),
+    const results = await Promise.allSettled(
+      connections.map(async (connection) => {
+        if (connection.platform === "github") {
+          return {
+            platform: "github",
+            data: await github.fetch(connection.username)
+          }
+        }
 
-      leetcode.fetch("your_leetcode_username"),
+        if (connection.platform === "leetcode") {
+          return {
+            platform: "leetcode",
+            data: await leetcode.fetch(connection.username)
+          }
+        }
 
-      codeforces.fetch("tourist")
+        if (connection.platform === "codeforces") {
+          return {
+            platform: "codeforces",
+            data: await codeforces.fetch(connection.username)
+          }
+        }
 
-    ])
+        return null
+      })
+    )
 
+    const activities = []
 
+    for (const result of results) {
+      if (result.status !== "fulfilled" || !result.value) {
+        continue
+      }
 
-    let allActivities = []
+      const { platform, data } = result.value
 
-
-
-    // GITHUB
-    const githubResult = results[0]
-
-    if (githubResult.status === "fulfilled") {
-
-      const githubActivities =
-        normalizeGithubActivities(
-          githubResult.value
+      if (platform === "github") {
+        activities.push(
+          ...normalizeGithubActivities(data).map((activity) => ({
+            ...activity,
+            userId
+          }))
         )
+      }
 
-      allActivities = [
-        ...allActivities,
-        ...githubActivities
-      ]
-    }
-
-
-
-    // LEETCODE
-    const leetcodeResult = results[1]
-
-    if (leetcodeResult.status === "fulfilled") {
-
-      const leetcodeActivities =
-        normalizeLeetcodeActivities(
-          leetcodeResult.value
+      if (platform === "leetcode") {
+        activities.push(
+          ...normalizeLeetcodeActivities(data).map((activity) => ({
+            ...activity,
+            userId
+          }))
         )
+      }
 
-      allActivities = [
-        ...allActivities,
-        ...leetcodeActivities
-      ]
-    }
-
-
-
-    // CODEFORCES
-    const codeforcesResult = results[2]
-
-    if (codeforcesResult.status === "fulfilled") {
-
-      const codeforcesActivities =
-        normalizeCodeforcesActivities(
-          codeforcesResult.value
+      if (platform === "codeforces") {
+        activities.push(
+          ...normalizeCodeforcesActivities(data).map((activity) => ({
+            ...activity,
+            userId
+          }))
         )
-
-      allActivities = [
-        ...allActivities,
-        ...codeforcesActivities
-      ]
+      }
     }
 
-
-
-    // SAVE TO DATABASE
-    for (const activity of allActivities) {
-
-      await prisma.activitySnapshot.create({
-
-        data: activity
-
+    if (activities.length > 0) {
+      await prisma.activitySnapshot.createMany({
+        data: activities,
+        skipDuplicates: true
       })
     }
 
-
-
     return {
-
       success: true,
-
-      totalActivities: allActivities.length,
-
-      activities: allActivities
-
+      totalActivities: activities.length,
+      activities
     }
-
   } catch (error) {
-
     console.log(error.message)
-
     throw error
-
   }
 }

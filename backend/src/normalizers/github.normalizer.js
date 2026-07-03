@@ -11,6 +11,8 @@ export const normalizeGithubActivities = (
 
       activities.push({
 
+        sourceKey: event.id,
+
         platform: "github",
 
         activityType: "push",
@@ -32,6 +34,8 @@ export const normalizeGithubActivities = (
     if (event.type === "PullRequestEvent") {
 
       activities.push({
+
+        sourceKey: event.id,
 
         platform: "github",
 
@@ -55,6 +59,8 @@ export const normalizeGithubActivities = (
 
       activities.push({
 
+        sourceKey: event.id,
+
         platform: "github",
 
         activityType: "issue",
@@ -76,6 +82,8 @@ export const normalizeGithubActivities = (
     if (event.type === "WatchEvent") {
 
       activities.push({
+
+        sourceKey: event.id,
 
         platform: "github",
 

@@ -1,10 +1,9 @@
 import { registerUser } from "../services/auth.service.js"
 import { loginUser } from "../services/auth.service.js"
-import { registerSchema } from "../validators/auth.validator.js"
+import { loginSchema, registerSchema } from "../validators/auth.validator.js"
 
 export const register = async (req, res) => {
   try {
-    // Validate request body
     registerSchema.parse(req.body)
     const { email, password } = req.body
 
@@ -26,7 +25,14 @@ export const register = async (req, res) => {
       })
     }
 
-    res.status(400).json({
+    if (error.code === "P2002") {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists"
+      })
+    }
+
+    res.status(500).json({
       success: false,
       message: error.message
     })
@@ -35,15 +41,8 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
+    loginSchema.parse(req.body)
     const { email, password } = req.body
-
-    // Validate inputs
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required"
-      })
-    }
 
     const result = await loginUser(email, password)
 
@@ -54,6 +53,14 @@ export const login = async (req, res) => {
     })
   } catch (error) {
     console.error("Login endpoint error:", error.message)
+
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors
+      })
+    }
     
     res.status(401).json({
       success: false,

@@ -18,6 +18,7 @@ model User {
   password           String
   createAt           DateTime            @default(now())
   connectedPlatforms ConnectedPlatform[]
+  activitySnapshots  ActivitySnapshot[]
 }
 
 model ConnectedPlatform {
@@ -29,17 +30,21 @@ model ConnectedPlatform {
 
   username String
 
-  accessToken String
+  accessToken String?
 
   createdAt DateTime @default(now())
 
   userId String
 
   user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, platform])
 }
 
 model ActivitySnapshot {
   id String @id @default(uuid())
+
+  userId String?
 
   platform String
 
@@ -51,5 +56,12 @@ model ActivitySnapshot {
 
   metadata Json
 
+  sourceKey String?
+
   createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@unique([userId, platform, sourceKey])
+  @@index([userId, timestamp])
 }

@@ -8,6 +8,8 @@ export const normalizeLeetcodeActivities = (
 
     activities.push({
 
+      sourceKey: `leetcode:${stat.difficulty}:${stat.count}`,
+
       platform: "leetcode",
 
       activityType: "solved",

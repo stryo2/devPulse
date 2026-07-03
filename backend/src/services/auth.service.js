@@ -15,7 +15,9 @@ export const registerUser = async (email, password) => {
     })
 
     if (existingUser) {
-      throw new Error("User already exists")
+      const error = new Error("Email already exists")
+      error.code = "P2002"
+      throw error
     }
 
     // Hash password

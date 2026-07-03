@@ -6,6 +6,8 @@ export const normalizeCodeforcesActivities = (
 
   activities.push({
 
+    sourceKey: `codeforces:${codeforcesData.profile.username}:${codeforcesData.profile.rank}:${codeforcesData.profile.rating}:${codeforcesData.profile.maxRating}:${codeforcesData.profile.contribution}`,
+
     platform: "codeforces",
 
     activityType: "contest_profile",

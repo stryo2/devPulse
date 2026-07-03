@@ -6,9 +6,40 @@ import {
 import { encrypt } from "../utils/crypto.js"
 import prisma from "../lib/prisma.js"
 import jwt from "jsonwebtoken"
+import { LeetcodeAdapter } from "../adapters/leetcode.adapter.js"
+import { CodeforcesAdapter } from "../adapters/codeforces.adapter.js"
+
+const leetcode = new LeetcodeAdapter()
+const codeforces = new CodeforcesAdapter()
 
 const githubRedirectUri = () =>
   `${process.env.API_BASE_URL || "http://localhost:3000"}/api/platforms/github/callback`
+
+const frontendRedirectUri = () =>
+  process.env.FRONTEND_URL || "http://localhost:5173"
+
+const upsertPlatformConnection = async ({ userId, platform, username, platformUserId, accessToken }) => {
+  return prisma.connectedPlatform.upsert({
+    where: {
+      userId_platform: {
+        userId,
+        platform
+      }
+    },
+    create: {
+      userId,
+      platform,
+      username,
+      platformUserId,
+      accessToken
+    },
+    update: {
+      username,
+      platformUserId,
+      accessToken
+    }
+  })
+}
 
 // ================= CONNECT GITHUB =================
 
@@ -46,7 +77,10 @@ export const connectGithub = async (req, res) => {
       `&scope=${encodeURIComponent("read:user user:email")}` +
       `&state=${encodeURIComponent(state)}`
 
-    return res.redirect(githubUrl)
+    return res.status(200).json({
+      success: true,
+      authorizationUrl: githubUrl
+    })
 
   } catch (error) {
 
@@ -174,16 +208,17 @@ export const githubCallback = async (req, res) => {
       })
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "GitHub connected successfully",
-      githubUser: {
-        id: githubUser.id,
-        login: githubUser.login,
-        email: githubUser.email,
-        avatar_url: githubUser.avatar_url
-      }
-    })
+    // return res.status(200).json({
+    //   success: true,
+    //   message: "GitHub connected successfully",
+    //   githubUser: {
+    //     id: githubUser.id,
+    //     login: githubUser.login,
+    //     email: githubUser.email,
+    //     avatar_url: githubUser.avatar_url
+    //   }
+    // })
+    return res.redirect(`${frontendRedirectUri()}/dashboard`)
 
   } catch (error) {
 
@@ -192,6 +227,94 @@ export const githubCallback = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "GitHub OAuth failed"
+    })
+  }
+}
+
+export const connectLeetcode = async (req, res) => {
+  try {
+    const userId = req.user?.id
+    const { username } = req.body
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated"
+      })
+    }
+
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        message: "LeetCode username is required"
+      })
+    }
+
+    const profile = await leetcode.fetch(username)
+
+    await upsertPlatformConnection({
+      userId,
+      platform: "leetcode",
+      username: profile.profile.username,
+      platformUserId: profile.profile.username,
+      accessToken: null
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: "LeetCode connected successfully",
+      profile
+    })
+  } catch (error) {
+    console.log("Connect LeetCode Error:", error.message)
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to connect LeetCode"
+    })
+  }
+}
+
+export const connectCodeforces = async (req, res) => {
+  try {
+    const userId = req.user?.id
+    const { username } = req.body
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated"
+      })
+    }
+
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        message: "Codeforces username is required"
+      })
+    }
+
+    const profile = await codeforces.fetch(username)
+
+    await upsertPlatformConnection({
+      userId,
+      platform: "codeforces",
+      username: profile.profile.username,
+      platformUserId: profile.profile.username,
+      accessToken: null
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: "Codeforces connected successfully",
+      profile
+    })
+  } catch (error) {
+    console.log("Connect Codeforces Error:", error.message)
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to connect Codeforces"
     })
   }
 }

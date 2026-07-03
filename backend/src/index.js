@@ -2,6 +2,9 @@ import "dotenv/config"
 import express from "express"
 import authRoutes from "./routes/auth.routes.js"
 import platformRoutes from "./routes/platform.routes.js"
+import activityRoutes from "./routes/activity.routes.js"
+import syncRoutes from "./routes/sync.routes.js"
+import cors from "cors"
 
 // Validate required environment variables
 const requiredEnvVars = [
@@ -26,12 +29,17 @@ if (missingEnvVars.length > 0) {
 }
 
 const app = express()
+app.use(cors({
+  origin: "http://localhost:5173"
+}))
 const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
 app.use("/api/auth", authRoutes)
 app.use("/api/platforms", platformRoutes)
+app.use("/api/activity", activityRoutes)
+app.use("/api/sync", syncRoutes)
 
 // Health check endpoint
 app.get("/health", (req, res) => {
