@@ -11,9 +11,57 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-model User{
+
+model User {
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  password           String
+  createAt           DateTime            @default(now())
+  connectedPlatforms ConnectedPlatform[]
+  activitySnapshots  ActivitySnapshot[]
+}
+
+model ConnectedPlatform {
   id String @id @default(uuid())
-  email String @unique
-  password String 
-  createAt DateTime @default(now())
+
+  platform String
+
+  platformUserId String
+
+  username String
+
+  accessToken String?
+
+  createdAt DateTime @default(now())
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, platform])
+}
+
+model ActivitySnapshot {
+  id String @id @default(uuid())
+
+  userId String?
+
+  platform String
+
+  activityType String
+
+  title String
+
+  timestamp DateTime
+
+  metadata Json
+
+  sourceKey String?
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@unique([userId, platform, sourceKey])
+  @@index([userId, timestamp])
 }
