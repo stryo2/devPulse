@@ -1,14 +1,31 @@
-import { syncUserActivity }
-from "./services/sync.service.js"
+import "dotenv/config";
+import syncQueue from "./queues/sync.queue.js";
+import redis from "./lib/redis.js";
 
-const run = async () => {
+async function testQueue() {
+  let exitCode = 0;
 
-  const data = await syncUserActivity()
+  try {
+    console.log("Adding test sync job...");
 
-  console.log(
-    JSON.stringify(data, null, 2)
-  )
+    const job = await syncQueue.add("sync-user", {
+      userId: "test-user-123",
+    });
 
+    console.log("✅ Job added successfully!");
+    console.log("Job ID:", job.id);
+    console.log("Job name:", job.name);
+    console.log("Job data:", job.data);
+  } catch (error) {
+    console.error("❌ Failed to add job:", error);
+
+    exitCode = 1;
+  } finally {
+    await syncQueue.close();
+    await redis.quit();
+
+    process.exit(exitCode);
+  }
 }
 
-run()
+testQueue();
