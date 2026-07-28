@@ -2,17 +2,16 @@ import "dotenv/config";
 import { Worker } from "bullmq";
 import redis from "../lib/redis.js";
 import { SYNC_QUEUE_NAME } from "../queues/sync.queue.js";
-
+import { syncUserActivity } from "../services/sync.service.js";
 const worker = new Worker(
   SYNC_QUEUE_NAME,
   async (job) => {
-    console.log("Received sync job", {
-      id: job.id,
-      name: job.name,
-      data: job.data,
-      attemptsMade: job.attemptsMade,
-    });
-  },
+  console.log(`Processing sync for ${job.data.userId}`);
+
+  await syncUserActivity(job.data.userId);
+
+  console.log("Sync completed");
+},
   {
     connection: redis,
     concurrency: 5,

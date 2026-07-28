@@ -9,7 +9,13 @@ import { withRetry } from "../utils/retry.js"
 export class LeetcodeAdapter extends BaseAdapter {
 
   async fetch(username) {
-const query = `
+    const normalizedUsername = username?.trim()
+
+    if (!normalizedUsername) {
+      throw new Error("LeetCode username is required")
+    }
+
+    const query = `
 query userProfile($username: String!) {
   matchedUser(username: $username) {
     username
@@ -28,20 +34,47 @@ query userProfile($username: String!) {
   }
 }
 `
-const response = await withRetry(() =>
-  http.post(
-    "https://leetcode.com/graphql",
-    {
-      query,
-      variables: {
-        username
-      }
-    }
-  )
-)
-const user = response.data.data.matchedUser
     try {
-        return {
+      const response = await withRetry(() =>
+        http.post(
+          "https://leetcode.com/graphql",
+          {
+            query,
+            variables: {
+              username: normalizedUsername
+            }
+          }
+        )
+      )
+
+      const errors = response.data?.errors
+      const user = response.data?.data?.matchedUser
+
+      if (errors?.length) {
+        const message = errors.map((error) => error.message).join(", ")
+
+        const graphqlError = new Error(message)
+
+        // LeetCode reports an unknown username as a GraphQL error over
+        // HTTP 200, so that specific case is a client error, not a fault.
+        if (/does not exist|not found/i.test(message)) {
+          graphqlError.statusCode = 404
+        }
+
+        throw graphqlError
+      }
+
+      if (!user) {
+        const notFound = new Error(
+          `LeetCode user "${normalizedUsername}" was not found`
+        )
+
+        notFound.statusCode = 404
+
+        throw notFound
+      }
+
+      return {
 
   platform: "leetcode",
 
@@ -55,16 +88,11 @@ const user = response.data.data.matchedUser
 
   },
 
-  solvedStats: user.submitStats.acSubmissionNum
+        solvedStats: user.submitStats?.acSubmissionNum ?? []
       }
-
     } catch (error) {
-
       console.log(error.message)
-
       throw error
-
     }
-
   }
 }

@@ -36,6 +36,7 @@ async getEvents(username) {
   )
 
   return response.data.map((event) => ({
+    id: event.id,
     type: event.type,
     repo: event.repo?.name,
     createdAt: event.created_at,
