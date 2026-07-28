@@ -1,4 +1,4 @@
-import { syncUserActivity } from "../services/sync.service.js"
+import syncQueue from "../queues/sync.queue.js";
 
 export const triggerSync = async (req, res) => {
   try {
@@ -11,12 +11,14 @@ export const triggerSync = async (req, res) => {
       })
     }
 
-    const result = await syncUserActivity(userId)
+    const job = await syncQueue.add("sync-user", {
+      userId,
+    });
 
     return res.status(200).json({
       success: true,
       message: "Sync triggered successfully",
-      ...result
+      jobId: job.id
     })
   } catch (error) {
     console.error("Sync trigger error:", error.message)

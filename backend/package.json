@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
+    "worker": "node src/workers/sync.worker.js",
+    "worker:dev": "nodemon src/workers/sync.worker.js",
     "prisma:generate": "prisma generate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

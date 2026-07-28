@@ -268,6 +268,15 @@ export const connectLeetcode = async (req, res) => {
   } catch (error) {
     console.log("Connect LeetCode Error:", error.message)
 
+    // A bad username is the caller's mistake, so surface the real reason
+    // instead of a generic server error.
+    if (error.statusCode >= 400 && error.statusCode < 500) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      })
+    }
+
     return res.status(500).json({
       success: false,
       message: "Failed to connect LeetCode"
@@ -311,6 +320,15 @@ export const connectCodeforces = async (req, res) => {
     })
   } catch (error) {
     console.log("Connect Codeforces Error:", error.message)
+
+    // A bad handle is the caller's mistake, so surface the real reason
+    // instead of a generic server error.
+    if (error.statusCode >= 400 && error.statusCode < 500) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      })
+    }
 
     return res.status(500).json({
       success: false,
