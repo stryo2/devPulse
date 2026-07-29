@@ -42,6 +42,22 @@ export const encrypt = (text) => {
   }
 }
 
+// Reverses how tokens are persisted on ConnectedPlatform.accessToken:
+// JSON.stringify({ iv, content }). Returns null when there is no usable token
+// so callers can fall back to unauthenticated requests instead of failing.
+export const decryptStoredToken = (storedValue) => {
+  if (!storedValue) {
+    return null
+  }
+
+  try {
+    return decrypt(JSON.parse(storedValue))
+  } catch (error) {
+    console.error("Stored token could not be decrypted:", error.message)
+    return null
+  }
+}
+
 export const decrypt = (hash) => {
   try {
     if (!hash || !hash.iv || !hash.content) {
