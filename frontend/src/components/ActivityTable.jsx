@@ -1,36 +1,29 @@
 import { useEffect, useState } from "react"
 import http from "../api/http"
 
-function ActivityTable() {
+const KNOWN_PLATFORMS = ["github", "leetcode", "codeforces"]
+
+const dotClass = (platform) =>
+  KNOWN_PLATFORMS.includes(platform) ? `dot--${platform}` : "dot--unknown"
+
+// Stored activityTypes are snake_case; show them as words.
+const humanise = (type) => type.replace(/_/g, " ")
+
+function ActivityTable({ refreshKey = 0 }) {
 
   const [activities, setActivities] = useState([])
-  const [loading, setLoading] = useState(false)
+  // Starts true: the effect fetches on mount, and setting it in the effect body
+  // would be a synchronous setState.
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-
-  useEffect(() => {
-
-    fetchActivities()
-
-  }, [])
 
   const fetchActivities = async () => {
 
     try {
-      setLoading(true)
-      setError("")
-
-      const token = localStorage.getItem("token")
-
-      const response = await http.get(
-        "/activity?limit=50",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      )
+      const response = await http.get("/activity?limit=50")
 
       setActivities(response.data.data)
+      setError("")
 
     } catch (error) {
 
@@ -41,43 +34,75 @@ function ActivityTable() {
     }
   }
 
-  if (loading) {
-    return <p>Loading activity...</p>
-  }
+  // Declared after fetchActivities so the reference is initialised, not in its
+  // temporal dead zone.
+  useEffect(() => {
+
+    // Every setState in fetchActivities runs after `await`, i.e. in a microtask
+    // rather than synchronously during the effect — which is the cascading
+    // render this rule exists to prevent.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchActivities()
+  }, [refreshKey])
 
   return (
-    <div>
-      {error ? <p>{error}</p> : null}
+    <section className="dashboard__section">
 
-      <table border="1">
+      <h2 className="dashboard__section-title">Recent activity</h2>
 
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Platform</th>
-            <th>Type</th>
-            <th>Count</th>
-          </tr>
-        </thead>
+      {error ? <div className="alert">{error}</div> : null}
 
-        <tbody>
+      {loading ? (
+        <div className="state">Loading activity…</div>
+      ) : activities.length === 0 ? (
+        <div className="state">
+          <div className="state__title">No activity yet</div>
+          <p>Connect a platform and run a sync to populate this feed.</p>
+        </div>
+      ) : (
+        <div className="data-table-wrap">
+          <table className="data-table">
 
-          {activities.map((activity) => (
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Platform</th>
+                <th scope="col">Type</th>
+                <th scope="col">Count</th>
+              </tr>
+            </thead>
 
-            <tr key={activity.id}>
+            <tbody>
 
-              <td>{new Date(activity.date).toLocaleString()}</td>
-              <td>{activity.platform}</td>
-              <td>{activity.type}</td>
-              <td>{activity.count}</td>
+              {activities.map((activity) => (
 
-            </tr>
+                <tr key={activity.id}>
 
-          ))}
+                  <td>{new Date(activity.date).toLocaleString()}</td>
 
-        </tbody>
-      </table>
-    </div>
+                  <td>
+                    <span className="badge">
+                      <span
+                        className={`badge__dot ${dotClass(activity.platform)}`}
+                        aria-hidden="true"
+                      />
+                      {activity.platform}
+                    </span>
+                  </td>
+
+                  <td>{humanise(activity.type)}</td>
+                  <td>{activity.count}</td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+          </table>
+        </div>
+      )}
+
+    </section>
   )
 }
 

@@ -6,7 +6,6 @@ export const normalizeGithubActivities = (
 
   for (const event of githubData.events) {
 
-    // PUSH EVENTS
     if (event.type === "PushEvent") {
 
       activities.push({
@@ -30,7 +29,6 @@ export const normalizeGithubActivities = (
 
 
 
-    // PULL REQUEST EVENTS
     if (event.type === "PullRequestEvent") {
 
       activities.push({
@@ -54,7 +52,6 @@ export const normalizeGithubActivities = (
 
 
 
-    // ISSUE EVENTS
     if (event.type === "IssuesEvent") {
 
       activities.push({
@@ -78,7 +75,7 @@ export const normalizeGithubActivities = (
 
 
 
-    // STAR EVENTS
+    // GitHub calls a star a WatchEvent; "watching" is a different feature.
     if (event.type === "WatchEvent") {
 
       activities.push({

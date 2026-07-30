@@ -1,6 +1,9 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import http from "../api/http"
+import { clearToken, setToken } from "../lib/session"
+import "../styles/dashboard.css"
 
 function Register() {
 
@@ -19,12 +22,18 @@ function Register() {
 
     try {
 
-      await http.post("/auth/register", {
+      // Registration must never inherit an existing session — that is how a new
+      // account ends up acting as the old one and overwriting its connections.
+      clearToken()
+
+      const response = await http.post("/auth/register", {
         email,
         password
       })
 
-      navigate("/")
+      setToken(response.data.token)
+
+      navigate("/dashboard")
 
     } catch (error) {
 
@@ -36,34 +45,57 @@ function Register() {
   }
 
   return (
-    <div>
+    <div className="auth">
+      <div className="auth__card">
 
-      <h1>Register</h1>
+        <h1 className="auth__title">Create your account</h1>
+        <p className="auth__subtitle">
+          Track your activity across GitHub, LeetCode and Codeforces
+        </p>
 
-      {error ? <p>{error}</p> : null}
+        {error ? <div className="alert">{error}</div> : null}
 
-      <form onSubmit={handleRegister}>
+        <form className="auth__form" onSubmit={handleRegister}>
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+          <div className="field">
+            <label className="field__label" htmlFor="register-email">
+              Email
+            </label>
+            <input
+              id="register-email"
+              className="input"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <div className="field">
+            <label className="field__label" htmlFor="register-password">
+              Password
+            </label>
+            <input
+              id="register-password"
+              className="input"
+              type="password"
+              placeholder="At least 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <button type="submit">
-          {loading ? "Registering..." : "Register"}
-        </button>
+          <button type="submit" className="btn btn--primary btn--block" disabled={loading}>
+            {loading ? "Creating account…" : "Create account"}
+          </button>
 
-      </form>
+        </form>
 
+        <p className="auth__footer">
+          Already have an account? <Link to="/">Sign in</Link>
+        </p>
+
+      </div>
     </div>
   )
 }

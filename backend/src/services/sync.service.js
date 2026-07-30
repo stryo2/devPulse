@@ -19,13 +19,9 @@ const fanoutBatchSize = () => {
 }
 
 /**
- * Fans a scheduled tick out into one sync job per user who has at least one
- * connected platform. Users with no connections are skipped entirely — there is
- * nothing to fetch for them.
- *
- * Each job carries a deduplication key so a slow sync can never have a second
- * run for the same user executing alongside it: `keepLastIfActive` caps a key at
- * one active plus one waiting job.
+ * Fans a scheduled tick out into one sync job per user with a connected
+ * platform. The deduplication key caps each user at one active plus one waiting
+ * job, so a slow sync can never overlap its own next run.
  */
 export const enqueueScheduledSyncs = async () => {
   const connections = await prisma.connectedPlatform.findMany({
@@ -54,8 +50,7 @@ export const enqueueScheduledSyncs = async () => {
   }
 
   // `submitted` is what was handed to the queue, not what it accepted —
-  // deduplication silently collapses a submission when that user already has a
-  // job pending. Reporting it as "created" would overstate the fan-out.
+  // deduplication silently collapses jobs for users who already have one pending.
   return { users: connections.length, submitted }
 }
 

@@ -1,0 +1,740 @@
+/*
+ * Dashboard styles + data-visualisation tokens.
+ *
+ * The --viz-* values below are NOT free to change. Each was checked with the
+ * dataviz palette validator against this app's real card surfaces
+ * (#ffffff light / #151518 dark) — lightness band, chroma floor, colour-vision
+ * separation, and contrast. Dark steps are a selected set for the dark surface,
+ * never an inversion of the light ramp. Re-run the validator before editing.
+ */
+
+.dashboard,
+.auth {
+  /* Chart chrome */
+  --viz-grid: #e4e4e7;
+  --viz-axis: #d4d4d8;
+  --viz-muted: #71717a;
+
+  /* Categorical — platform identity ONLY, as a small dot beside a text label.
+     All-pairs PASS both modes. Aqua is 2.82:1 on white, so it never carries
+     meaning alone; the adjacent label does. */
+  --viz-github: #2a78d6;
+  --viz-leetcode: #eb6834;
+  --viz-codeforces: #1baf7a;
+
+  /* Single-series mark colour for nominal bars (event types, repos). One colour
+     for every bar: a value-ramp on unordered categories would double-encode bar
+     length as hue. */
+  --viz-series: #2a78d6;
+
+  /* Ordinal ramp — LeetCode Easy -> Medium -> Hard. Ordered data earns a ramp. */
+  --viz-ord-1: #86b6ef;
+  --viz-ord-2: #3987e5;
+  --viz-ord-3: #1c5cab;
+
+  /* Sequential ramp — heatmap levels 1..4. Light end is step 250 (2.11:1),
+     deliberately not step 200 (1.79:1, below the 2:1 floor). */
+  --viz-heat-0: var(--bg-inset);
+  --viz-heat-1: #86b6ef;
+  --viz-heat-2: #5598e7;
+  --viz-heat-3: #2a78d6;
+  --viz-heat-4: #184f95;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dashboard,
+  .auth {
+    --viz-grid: #26262b;
+    --viz-axis: #33333a;
+
+    --viz-github: #3987e5;
+    --viz-leetcode: #d95926;
+    --viz-codeforces: #199e70;
+
+    --viz-series: #3987e5;
+
+    --viz-ord-1: #6da7ec;
+    --viz-ord-2: #2a78d6;
+    --viz-ord-3: #184f95;
+
+    --viz-heat-1: #6da7ec;
+    --viz-heat-2: #3987e5;
+    --viz-heat-3: #256abf;
+    --viz-heat-4: #184f95;
+  }
+}
+
+/* ============================= Layout ============================= */
+
+.dashboard {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-6) var(--space-12);
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  .dashboard {
+    padding: 0 var(--space-4) var(--space-8);
+  }
+}
+
+.dashboard__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-8) 0 var(--space-6);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-2);
+}
+
+.dashboard__title {
+  font-size: var(--fs-2xl);
+  line-height: 1.2;
+}
+
+.dashboard__subtitle {
+  font-size: var(--fs-base);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+.dashboard__section {
+  margin-top: var(--space-8);
+}
+
+.dashboard__section-title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-4);
+}
+
+/* Vertical rhythm without inline styles. */
+.stack-sm { margin-top: var(--space-3); }
+.stack-md { margin-top: var(--space-4); }
+.stack-lg { margin-top: var(--space-5); }
+
+/* ============================= Grids ============================= */
+
+.kpi-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.chart-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.chart-grid--full {
+  grid-template-columns: 1fr;
+}
+
+/* ============================= Card ============================= */
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  min-width: 0; /* lets grid children shrink instead of forcing page scroll */
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.card__title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.card__subtitle {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+.card__note {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+/* ============================= Buttons ============================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 34px;
+  padding: 0 var(--space-4);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    box-shadow var(--transition);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Literal fallback: this variant sets a light foreground, so a missing accent
+   would leave white text on a white surface — invisible, not merely ugly. */
+.btn--primary {
+  background: var(--accent, #7c5cff);
+  border-color: var(--accent, #7c5cff);
+  color: var(--text-on-accent, #fff);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover, #6d4bf5);
+  border-color: var(--accent-hover, #6d4bf5);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.btn--sm {
+  height: 28px;
+  padding: 0 var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+/* ============================= Forms ============================= */
+
+.input {
+  height: 34px;
+  padding: 0 var(--space-3);
+  font-size: var(--fs-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  min-width: 0;
+  flex: 1 1 160px;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:hover {
+  border-color: var(--border-strong);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+}
+
+/* ============================= Filter row ============================= */
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.filter-row__label {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* Segmented control rather than loose pills — one object, not four buttons. */
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.segmented__option {
+  height: 26px;
+  padding: 0 var(--space-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    color var(--transition);
+}
+
+.segmented__option:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.segmented__option[aria-pressed='true'] {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.segmented__option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================= Stat tile ============================= */
+
+.stat__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+}
+
+.stat__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex: none;
+}
+
+/* Proportional figures: tabular-nums gives every digit the width of a zero,
+   which makes a large standalone number look loose. Tabular is for columns. */
+.stat__value {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-top: var(--space-3);
+}
+
+.stat__unit {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+}
+
+.stat__meta {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+.stat__delta {
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+}
+
+.stat__delta--up {
+  color: var(--success);
+}
+
+.stat__breakdown {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.stat__breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.stat__breakdown-key {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  min-width: 0;
+}
+
+.stat__breakdown-value {
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================= Charts ============================= */
+
+/* Height covers plot + axis band, so axis labels are never clipped into a
+   nested scrollbar. */
+.chart-frame {
+  width: 100%;
+  height: 240px;
+}
+
+.chart-frame--short {
+  height: 200px;
+}
+
+.viz-tooltip {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-sm);
+}
+
+.viz-tooltip__label {
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.viz-tooltip__value {
+  color: var(--text-primary);
+  font-weight: var(--fw-semibold);
+}
+
+/* ============================= Heatmap ============================= */
+
+.heatmap {
+  overflow-x: auto; /* wide content scrolls inside its own container */
+  padding-bottom: var(--space-1);
+}
+
+.heatmap__legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-3);
+}
+
+.heatmap__legend-label {
+  margin: 0 var(--space-1);
+}
+
+.heatmap__legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* ================= Table (a tooltip is never the only way to read a value) ================= */
+
+.data-table-wrap {
+  overflow-x: auto;
+  margin-top: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+}
+
+.data-table thead th {
+  background: var(--bg-inset);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+
+.data-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background: var(--bg-subtle);
+}
+
+.data-table td {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table td:first-child {
+  color: var(--text-secondary);
+}
+
+/* Platform badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  flex: none;
+}
+
+/* ============================= States ============================= */
+
+/* Hold the previous render instead of flashing a skeleton on refetch. */
+.is-refreshing {
+  opacity: 0.5;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+
+.state {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-12) var(--space-5);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+}
+
+.state__title {
+  color: var(--text-primary);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--space-2);
+}
+
+.state__action {
+  margin-top: var(--space-5);
+}
+
+.state--error {
+  border-color: var(--danger-border);
+  background: var(--danger-subtle);
+}
+
+.state--error .state__title {
+  color: var(--danger);
+}
+
+/* Skeletons mirror real element dimensions so nothing shifts on load. */
+.skeleton {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-subtle);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.skeleton--tile {
+  height: 128px;
+}
+
+.skeleton--chart {
+  height: 300px;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ============================= Messages ============================= */
+
+.alert {
+  display: flex;
+  gap: var(--space-2);
+  border: 1px solid var(--danger-border);
+  background: var(--danger-subtle);
+  color: var(--danger);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-base);
+  margin-top: var(--space-4);
+}
+
+/* Informational, not a failure — visually distinct from .alert so a queued
+   sync doesn't read like an error. */
+.notice {
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--fs-base);
+  margin-top: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.notice__action {
+  margin-top: var(--space-3);
+}
+
+/* Platform identity dots. Static colours belong in CSS; StatTile keeps an
+   inline value because its accent arrives as a prop from generic callers. */
+.dot--github { background: var(--viz-github); }
+.dot--leetcode { background: var(--viz-leetcode); }
+.dot--codeforces { background: var(--viz-codeforces); }
+.dot--unknown { background: var(--text-muted); }
+
+.heatmap__legend-swatch--0 { background: var(--viz-heat-0); }
+.heatmap__legend-swatch--1 { background: var(--viz-heat-1); }
+.heatmap__legend-swatch--2 { background: var(--viz-heat-2); }
+.heatmap__legend-swatch--3 { background: var(--viz-heat-3); }
+.heatmap__legend-swatch--4 { background: var(--viz-heat-4); }
+
+/* ============================= Connect platforms ============================= */
+
+.connect-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.connect-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-4);
+}
+
+/* ============================= Auth pages ============================= */
+
+/* Centring is owned here, not inherited from #root. */
+.auth {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.auth__card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-md);
+}
+
+.auth__title {
+  font-size: var(--fs-xl);
+  text-align: center;
+}
+
+.auth__subtitle {
+  font-size: var(--fs-base);
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: var(--space-2);
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.auth__footer {
+  text-align: center;
+  font-size: var(--fs-base);
+  color: var(--text-muted);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}

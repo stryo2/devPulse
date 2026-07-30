@@ -55,8 +55,8 @@ query userProfile($username: String!) {
 
         const graphqlError = new Error(message)
 
-        // LeetCode reports an unknown username as a GraphQL error over
-        // HTTP 200, so that specific case is a client error, not a fault.
+        // LeetCode reports an unknown username as a GraphQL error over HTTP 200,
+        // so it must be re-classified as a client error.
         if (/does not exist|not found/i.test(message)) {
           graphqlError.statusCode = 404
         }

@@ -7,21 +7,18 @@ export const http = axios.create({
   }
 })
 
-// Add response interceptor for better error handling
+// Logs only; the error is rethrown so withRetry still sees the original shape.
 http.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      // Server responded with error status
       console.error(
         `HTTP Error ${error.response.status}:`,
         error.response.data
       )
     } else if (error.request) {
-      // Request made but no response
       console.error("No response received:", error.message)
     } else {
-      // Request setup error
       console.error("Request error:", error.message)
     }
     throw error
