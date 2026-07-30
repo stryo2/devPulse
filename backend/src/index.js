@@ -7,7 +7,7 @@ import syncRoutes from "./routes/sync.routes.js"
 import analyticsRoutes from "./routes/analytics.routes.js"
 import cors from "cors"
 
-// Validate required environment variables
+// Fail at boot rather than on the first request that needs one of these.
 const requiredEnvVars = [
   "DATABASE_URL",
   "JWT_SECRET",
@@ -43,7 +43,6 @@ app.use("/api/activity", activityRoutes)
 app.use("/api/sync", syncRoutes)
 app.use("/api/analytics", analyticsRoutes)
 
-// Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok" })
 })

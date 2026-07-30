@@ -58,8 +58,8 @@ export class CodeforcesAdapter extends BaseAdapter {
 
     } catch (error) {
 
-      // Codeforces answers an unknown handle with HTTP 400 and a `comment`
-      // field, so axios rejects before the status check above can run.
+      // Codeforces answers an unknown handle with HTTP 400, so axios rejects
+      // before the status check above can run.
       if (error.response?.status === 400) {
 
         const notFound = new Error(

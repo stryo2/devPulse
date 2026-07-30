@@ -2,6 +2,8 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import http from "../api/http"
 import { Link } from "react-router-dom"
+import { clearToken, setToken } from "../lib/session"
+import "../styles/dashboard.css"
 
 function Login() {
 
@@ -19,12 +21,16 @@ function Login() {
 
     try {
 
+      // Drop the previous session first, so a failed login can't leave the old
+      // user's token in place.
+      clearToken()
+
       const response = await http.post("/auth/login", {
         email,
         password
       })
 
-      localStorage.setItem("token", response.data.token)
+      setToken(response.data.token)
 
       navigate("/dashboard")
 
@@ -38,35 +44,55 @@ function Login() {
   }
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className="auth">
+      <div className="auth__card">
 
-      {error ? <p>{error}</p> : null}
+        <h1 className="auth__title">Welcome back</h1>
+        <p className="auth__subtitle">Sign in to your DevPulse dashboard</p>
 
-      <form onSubmit={handleLogin}>
+        {error ? <div className="alert">{error}</div> : null}
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <form className="auth__form" onSubmit={handleLogin}>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <div className="field">
+            <label className="field__label" htmlFor="login-email">
+              Email
+            </label>
+            <input
+              id="login-email"
+              className="input"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-        <button type="submit">
-          {loading ? "Logging in..." : "Login"}
-        </button>
+          <div className="field">
+            <label className="field__label" htmlFor="login-password">
+              Password
+            </label>
+            <input
+              id="login-password"
+              className="input"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-      </form>
-      <p>
-        Don't have an account? <Link to="/register">Register</Link>
-      </p>
+          <button type="submit" className="btn btn--primary btn--block" disabled={loading}>
+            {loading ? "Signing in…" : "Sign in"}
+          </button>
+
+        </form>
+
+        <p className="auth__footer">
+          Don&apos;t have an account? <Link to="/register">Create one</Link>
+        </p>
+
+      </div>
     </div>
   )
 }

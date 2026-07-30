@@ -14,7 +14,7 @@ const worker = new Worker(
   SYNC_QUEUE_NAME,
   async (job) => {
   // The scheduled tick carries no userId — it fans out into per-user jobs that
-  // come back through the branch below.
+  // re-enter through the branch below.
   if (job.name === SYNC_ALL_JOB_NAME) {
     const { users, submitted } = await enqueueScheduledSyncs();
 
@@ -25,9 +25,9 @@ const worker = new Worker(
     return;
   }
 
+  // Return rather than throw: an unrecognised job is a routing mistake, and
+  // retrying it cannot fix that.
   if (job.name !== "sync-user") {
-    // Returning rather than throwing: an unrecognised job is a routing mistake,
-    // and retrying it three times cannot fix that.
     console.warn(`Ignoring unrecognised job name: ${job.name}`);
 
     return;

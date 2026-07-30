@@ -6,8 +6,8 @@ const sleep = (ms) => {
 
 
 
-// Connection-level failures that carry no HTTP response.
-// These are transient, so they are worth retrying.
+// Connection-level failures that carry no HTTP response — transient, so worth
+// retrying.
 const RETRYABLE_NETWORK_CODES = new Set([
   "ECONNRESET",
   "ECONNREFUSED",
@@ -42,9 +42,8 @@ export const withRetry = async (
 
       const status = error?.response?.status
 
-      // RETRY ONLY THESE
-      // `status` is undefined when the request never got a response,
-      // so the network code is checked separately.
+      // `status` is undefined when the request never got a response, so the
+      // network code is checked separately.
       const retryable =
         status === 429 ||
         (typeof status === "number" && status >= 500) ||

@@ -4,26 +4,24 @@ import jwt from "jsonwebtoken"
 
 export const registerUser = async (email, password) => {
   try {
-    // Validate inputs
     if (!email || !password) {
       throw new Error("Email and password are required")
     }
 
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email }
     })
 
     if (existingUser) {
+      // Mirrors Prisma's unique-violation code so the controller can map both
+      // this and a race-lost insert to the same response.
       const error = new Error("Email already exists")
       error.code = "P2002"
       throw error
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create user
     const user = await prisma.user.create({
       data: {
         email,
@@ -31,7 +29,6 @@ export const registerUser = async (email, password) => {
       }
     })
 
-    // Generate token
     const token = generateToken(user.id)
 
     console.log("User registered successfully:", email)
@@ -65,21 +62,20 @@ export const generateToken = (userId) => {
 
 export const loginUser = async (email, password) => {
   try {
-    // Validate inputs
     if (!email || !password) {
       throw new Error("Email and password are required")
     }
 
-    // Find user
     const user = await prisma.user.findUnique({
       where: { email }
     })
 
+    // Same message for unknown email and wrong password, so the response can't
+    // be used to enumerate registered addresses.
     if (!user) {
       throw new Error("Invalid credentials")
     }
 
-    // Compare passwords
     const isPasswordCorrect = await bcrypt.compare(
       password,
       user.password
@@ -89,7 +85,6 @@ export const loginUser = async (email, password) => {
       throw new Error("Invalid credentials")
     }
 
-    // Generate token
     const token = generateToken(user.id)
 
     console.log("User logged in successfully:", email)

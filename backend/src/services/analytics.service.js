@@ -1,7 +1,6 @@
 import prisma from "../lib/prisma.js"
 
-// Guards against a pathological number of distinct repos in one window. Never a
-// silent undercount: exceeding it sets `reposTruncated` on the response.
+// Never a silent undercount: exceeding this sets `reposTruncated` on the response.
 const MAX_REPOS = 100
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
@@ -22,12 +21,8 @@ const buildDateSpine = (windowStart, days) => {
   return spine
 }
 
-/**
- * GitHub is event-based: rows are discrete events carrying real upstream
- * timestamps, so these are genuine time-series aggregates. All counting happens
- * in SQL — no rows are transferred in order to be counted, so results stay exact
- * at any volume.
- */
+// Event-based: rows carry real upstream timestamps, so these are genuine time
+// series. Counting happens in SQL, keeping results exact at any row volume.
 const computeGithubAnalytics = async (userId, windowStart, days) => {
   const where = {
     userId,
@@ -95,12 +90,8 @@ const computeGithubAnalytics = async (userId, windowStart, days) => {
   }
 }
 
-/**
- * LeetCode is snapshot-based: `submitStats` exposes cumulative per-difficulty
- * counters with no timestamps. A row is written only when a counter changes, so
- * consecutive rows form a sparse progression and DISTINCT ON gives the latest
- * state per difficulty.
- */
+// Snapshot-based: `submitStats` gives cumulative per-difficulty counters with no
+// timestamps, so DISTINCT ON picks the latest observed state per difficulty.
 const computeLeetcodeAnalytics = async (userId, windowStart) => {
   const [currentRows, baselineRows] = await Promise.all([
     prisma.$queryRaw`
@@ -128,8 +119,16 @@ const computeLeetcodeAnalytics = async (userId, windowStart) => {
     `
   ])
 
+  // Connected but never synced. `null` is reserved for "not connected", so this
+  // returns a zeroed block with `asOf: null` instead.
   if (currentRows.length === 0) {
-    return null
+    return {
+      model: "snapshot",
+      current: {},
+      solvedInWindow: {},
+      partialWindow: true,
+      asOf: null
+    }
   }
 
   const baselineByDifficulty = new Map(
@@ -154,17 +153,16 @@ const computeLeetcodeAnalytics = async (userId, windowStart) => {
     model: "snapshot",
     current,
     solvedInWindow,
-    // No pre-window baseline means the platform was connected mid-window, so the
-    // delta is measured from zero and covers less than the requested range.
+    // No pre-window baseline means the delta above was measured from zero and
+    // covers less than the requested range — callers must not present it as a
+    // full-window figure.
     partialWindow: baselineRows.length === 0,
     asOf
   }
 }
 
-/**
- * Codeforces is snapshot-based: `user.info` returns current profile state only.
- * One row holds every field, so plain findFirst calls suffice.
- */
+// Snapshot-based: `user.info` returns current profile state only, and one row
+// holds every field, so plain findFirst calls suffice.
 const computeCodeforcesAnalytics = async (userId, windowStart) => {
   const [latest, baseline] = await Promise.all([
     prisma.activitySnapshot.findFirst({
@@ -182,8 +180,20 @@ const computeCodeforcesAnalytics = async (userId, windowStart) => {
     })
   ])
 
+  // Connected but never synced — see the note in computeLeetcodeAnalytics.
   if (!latest) {
-    return null
+    return {
+      model: "snapshot",
+      current: {
+        rating: null,
+        maxRating: null,
+        rank: null,
+        contribution: null
+      },
+      ratingChangeInWindow: null,
+      partialWindow: true,
+      asOf: null
+    }
   }
 
   const rating = latest.metadata?.rating ?? null
@@ -207,12 +217,11 @@ const computeCodeforcesAnalytics = async (userId, windowStart) => {
 }
 
 /**
- * Computes dashboard analytics for one user over a trailing window.
+ * Dashboard analytics for one user over a trailing window, each platform
+ * reported under the model it actually uses.
  *
- * Platforms are reported under the model they actually use — GitHub as
- * event-based time series, LeetCode and Codeforces as state snapshots with
- * windowed deltas. A platform the user has not connected is `null` rather than
- * an empty block, since absent and zero are different facts.
+ * A `null` platform block means exactly one thing: not connected. Connected
+ * platforms always return a block, zeroed if never synced.
  */
 export const computeUserAnalytics = async (userId, { days }) => {
   if (!userId) {
@@ -221,8 +230,8 @@ export const computeUserAnalytics = async (userId, { days }) => {
 
   const now = new Date()
 
-  // `days` whole UTC days ending today, snapped to a day boundary so the SQL
-  // filter and the daily spine cover exactly the same range.
+  // Snapped to a UTC day boundary so the SQL filter and the daily spine cover
+  // exactly the same range — otherwise `days=30` yields 31 buckets.
   const windowStart = new Date(
     startOfUtcDay(now).getTime() - (days - 1) * MS_PER_DAY
   )
