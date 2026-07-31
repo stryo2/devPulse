@@ -1,6 +1,7 @@
 import ConnectPlatforms from "./ConnectPlatforms"
 import ActivityTable from "../components/ActivityTable"
 import AnalyticsPanel from "../components/analytics/AnalyticsPanel"
+import ThemeToggle from "../components/ThemeToggle"
 import http from "../api/http"
 import { useCallback, useEffect, useRef, useState } from "react"
 import "../styles/dashboard.css"
@@ -64,14 +65,18 @@ function Dashboard() {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={triggerSync}
-          disabled={loading}
-        >
-          {loading ? "Syncing…" : "Sync now"}
-        </button>
+        <div className="dashboard__actions">
+          <ThemeToggle />
+
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={triggerSync}
+            disabled={loading}
+          >
+            {loading ? "Syncing…" : "Sync now"}
+          </button>
+        </div>
       </header>
 
       {error ? <div className="alert">{error}</div> : null}
