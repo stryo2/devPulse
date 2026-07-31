@@ -61,7 +61,6 @@ exact regardless of how many rows a user accumulates.
 
 ## Screenshots
 
-> 📸 Add images to `docs/screenshots/` and they will render here.
 
 |                                                                                               |                                                                                               |
 | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
