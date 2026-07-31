@@ -3,7 +3,6 @@ import crypto from "crypto"
 const algorithm = "aes-256-cbc"
 const secretKey = process.env.ENCRYPTION_KEY
 
-// Validate encryption key on module load
 if (!secretKey) {
   throw new Error("ENCRYPTION_KEY environment variable is not set")
 }
@@ -20,7 +19,7 @@ export const encrypt = (text) => {
       throw new Error("Text to encrypt cannot be empty")
     }
 
-    // Generate new IV for each encryption
+    // Fresh IV per call — reusing one across tokens would leak equality.
     const iv = crypto.randomBytes(16)
 
     const cipher = crypto.createCipheriv(
@@ -39,6 +38,24 @@ export const encrypt = (text) => {
   } catch (error) {
     console.error("Encryption failed:", error.message)
     throw error
+  }
+}
+
+/**
+ * Reverses how tokens are persisted on ConnectedPlatform.accessToken:
+ * JSON.stringify({ iv, content }). Returns null rather than throwing so a
+ * corrupt token degrades to an unauthenticated request instead of a failed sync.
+ */
+export const decryptStoredToken = (storedValue) => {
+  if (!storedValue) {
+    return null
+  }
+
+  try {
+    return decrypt(JSON.parse(storedValue))
+  } catch (error) {
+    console.error("Stored token could not be decrypted:", error.message)
+    return null
   }
 }
 

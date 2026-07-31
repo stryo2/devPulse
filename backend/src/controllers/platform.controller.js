@@ -41,12 +41,9 @@ const upsertPlatformConnection = async ({ userId, platform, username, platformUs
   })
 }
 
-// ================= CONNECT GITHUB =================
-
 export const connectGithub = async (req, res) => {
   try {
 
-    // verify authenticated user
     if (!req.user?.id) {
       return res.status(401).json({
         success: false,
@@ -54,7 +51,6 @@ export const connectGithub = async (req, res) => {
       })
     }
 
-    // verify env variables
     if (!process.env.GITHUB_CLIENT_ID) {
       return res.status(500).json({
         success: false,
@@ -64,6 +60,8 @@ export const connectGithub = async (req, res) => {
 
     const redirectUri = githubRedirectUri()
 
+    // Signed state carries the user id through the public callback, which has no
+    // session of its own, and doubles as the CSRF check.
     const state = jwt.sign(
       { userId: req.user.id },
       process.env.JWT_SECRET,
@@ -94,8 +92,6 @@ export const connectGithub = async (req, res) => {
 }
 
 
-// ================= GITHUB CALLBACK =================
-
 export const githubCallback = async (req, res) => {
 
   try {
@@ -105,7 +101,6 @@ export const githubCallback = async (req, res) => {
     const error = req.query.error
     const errorDescription = req.query.error_description
 
-    // github oauth error
     if (error) {
       return res.status(400).json({
         success: false,
@@ -114,7 +109,6 @@ export const githubCallback = async (req, res) => {
       })
     }
 
-    // no code
     if (!code) {
       return res.status(400).json({
         success: false,
@@ -122,7 +116,6 @@ export const githubCallback = async (req, res) => {
       })
     }
 
-    // no state
     if (!state) {
       return res.status(400).json({
         success: false,
@@ -130,7 +123,6 @@ export const githubCallback = async (req, res) => {
       })
     }
 
-    // verify state token
     let decodedState
 
     try {
@@ -146,7 +138,6 @@ export const githubCallback = async (req, res) => {
       })
     }
 
-    // find user
     const user = await prisma.user.findUnique({
       where: {
         id: decodedState.userId
@@ -160,21 +151,17 @@ export const githubCallback = async (req, res) => {
       })
     }
 
-    // exchange code for token
     const accessToken =
       await exchangeGithubCodeForToken(
         code,
         githubRedirectUri()
       )
 
-    // encrypt token
     const encryptedToken = encrypt(accessToken)
 
-    // fetch github user
     const githubUser =
       await fetchGithubAuthenticatedUser(accessToken)
 
-    // check existing connection
     const existingConnection =
       await prisma.connectedPlatform.findFirst({
         where: {
@@ -191,7 +178,6 @@ export const githubCallback = async (req, res) => {
       userId: user.id
     }
 
-    // update or create
     if (existingConnection) {
 
       await prisma.connectedPlatform.update({
@@ -208,16 +194,8 @@ export const githubCallback = async (req, res) => {
       })
     }
 
-    // return res.status(200).json({
-    //   success: true,
-    //   message: "GitHub connected successfully",
-    //   githubUser: {
-    //     id: githubUser.id,
-    //     login: githubUser.login,
-    //     email: githubUser.email,
-    //     avatar_url: githubUser.avatar_url
-    //   }
-    // })
+    // The browser lands here from GitHub, so this must redirect rather than
+    // return JSON.
     return res.redirect(`${frontendRedirectUri()}/dashboard`)
 
   } catch (error) {
@@ -268,6 +246,14 @@ export const connectLeetcode = async (req, res) => {
   } catch (error) {
     console.log("Connect LeetCode Error:", error.message)
 
+    // A bad username is the caller's mistake, not a server fault.
+    if (error.statusCode >= 400 && error.statusCode < 500) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      })
+    }
+
     return res.status(500).json({
       success: false,
       message: "Failed to connect LeetCode"
@@ -311,6 +297,14 @@ export const connectCodeforces = async (req, res) => {
     })
   } catch (error) {
     console.log("Connect Codeforces Error:", error.message)
+
+    // A bad handle is the caller's mistake, not a server fault.
+    if (error.statusCode >= 400 && error.statusCode < 500) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      })
+    }
 
     return res.status(500).json({
       success: false,

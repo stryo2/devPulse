@@ -30,7 +30,7 @@ export const listActivity = async (req, res) => {
         date: activity.timestamp,
         platform: activity.platform,
         type: activity.activityType,
-        count: 1
+        count: activity.metadata?.solvedCount ?? 1
       }))
     })
   } catch (error) {

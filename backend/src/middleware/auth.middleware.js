@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken"
 
 const authenticate = (req, res, next) => {
   try {
-    // Verify JWT secret is configured
     if (!process.env.JWT_SECRET) {
       console.error("JWT_SECRET not configured")
       return res.status(500).json({
@@ -11,7 +10,6 @@ const authenticate = (req, res, next) => {
       })
     }
 
-    // Get authorization header
     const authHeader = req.headers.authorization
 
     if (!authHeader) {
@@ -21,7 +19,6 @@ const authenticate = (req, res, next) => {
       })
     }
 
-    // Extract token
     const parts = authHeader.split(" ")
     if (parts.length !== 2 || parts[0] !== "Bearer") {
       return res.status(401).json({
@@ -32,10 +29,9 @@ const authenticate = (req, res, next) => {
 
     const token = parts[1]
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    // Attach user data to request
+    // Downstream code reads req.user.id — the payload signed in generateToken.
     req.user = decoded
 
     next()
