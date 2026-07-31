@@ -41,9 +41,11 @@
   --viz-heat-4: #184f95;
 }
 
+/* Dark chart ramp. Same two-selector split as the tokens in index.css — the
+   values are the validator-approved dark set and must stay identical in both. */
 @media (prefers-color-scheme: dark) {
-  .dashboard,
-  .auth {
+  :root:not([data-theme='light']) .dashboard,
+  :root:not([data-theme='light']) .auth {
     --viz-grid: #26262b;
     --viz-axis: #33333a;
 
@@ -64,6 +66,27 @@
   }
 }
 
+:root[data-theme='dark'] .dashboard,
+:root[data-theme='dark'] .auth {
+  --viz-grid: #26262b;
+  --viz-axis: #33333a;
+
+  --viz-github: #3987e5;
+  --viz-leetcode: #d95926;
+  --viz-codeforces: #199e70;
+
+  --viz-series: #3987e5;
+
+  --viz-ord-1: #6da7ec;
+  --viz-ord-2: #2a78d6;
+  --viz-ord-3: #184f95;
+
+  --viz-heat-1: #6da7ec;
+  --viz-heat-2: #3987e5;
+  --viz-heat-3: #256abf;
+  --viz-heat-4: #184f95;
+}
+
 /* ============================= Layout ============================= */
 
 .dashboard {
@@ -78,6 +101,12 @@
   .dashboard {
     padding: 0 var(--space-4) var(--space-8);
   }
+}
+
+.dashboard__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .dashboard__header {
@@ -252,6 +281,14 @@
 
 .btn--block {
   width: 100%;
+}
+
+/* Square, so the glyph sits centred rather than in a wide pill. */
+.btn--icon {
+  width: 34px;
+  padding: 0;
+  font-size: var(--fs-lg);
+  line-height: 1;
 }
 
 /* ============================= Forms ============================= */
@@ -694,11 +731,19 @@
 
 /* Centring is owned here, not inherited from #root. */
 .auth {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-6);
+}
+
+/* Out of the card, so it never reads as part of the sign-in form. */
+.auth__theme {
+  position: absolute;
+  top: var(--space-5);
+  right: var(--space-5);
 }
 
 .auth__card {

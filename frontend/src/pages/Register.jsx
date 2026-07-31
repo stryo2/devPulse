@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Link } from "react-router-dom"
 import http from "../api/http"
 import { clearToken, setToken } from "../lib/session"
+import ThemeToggle from "../components/ThemeToggle"
 import "../styles/dashboard.css"
 
 function Register() {
@@ -46,6 +47,10 @@ function Register() {
 
   return (
     <div className="auth">
+      <div className="auth__theme">
+        <ThemeToggle />
+      </div>
+
       <div className="auth__card">
 
         <h1 className="auth__title">Create your account</h1>

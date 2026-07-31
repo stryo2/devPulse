@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import http from "../api/http"
 import { Link } from "react-router-dom"
 import { clearToken, setToken } from "../lib/session"
+import ThemeToggle from "../components/ThemeToggle"
 import "../styles/dashboard.css"
 
 function Login() {
@@ -45,6 +46,10 @@ function Login() {
 
   return (
     <div className="auth">
+      <div className="auth__theme">
+        <ThemeToggle />
+      </div>
+
       <div className="auth__card">
 
         <h1 className="auth__title">Welcome back</h1>

@@ -98,8 +98,22 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/*
+ * Dark palette. Two selectors, identical bodies — CSS cannot share one block
+ * across a media query boundary, so KEEP THESE IN SYNC.
+ *
+ *   1. system dark, unless the user explicitly chose light
+ *   2. explicit dark, regardless of the OS setting
+ *
+ * Leaving the media query in place means a system-dark visitor is painted dark
+ * on the very first frame, before any JS runs — no flash to correct afterwards.
+ * ThemeToggle only writes [data-theme] once a choice is actually made, so with
+ * no stored preference the OS keeps control.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
     --bg-canvas: #0d0d0f;
     --bg-surface: #151518;
     --bg-subtle: #1c1c20;
@@ -128,6 +142,42 @@
     --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.4);
   }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg-canvas: #0d0d0f;
+  --bg-surface: #151518;
+  --bg-subtle: #1c1c20;
+  --bg-inset: #1c1c20;
+
+  --border: #26262b;
+  --border-strong: #33333a;
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+
+  --accent: #8b6dff;
+  --accent-hover: #9b81ff;
+  --accent-subtle: rgba(139, 109, 255, 0.14);
+  --accent-border: rgba(139, 109, 255, 0.42);
+  --accent-ring: rgba(139, 109, 255, 0.4);
+
+  --danger: #f87171;
+  --danger-subtle: rgba(248, 113, 113, 0.1);
+  --danger-border: rgba(248, 113, 113, 0.32);
+  --success: #4ade80;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Explicit light must also win over a dark OS for the browser's own UI. */
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 /* ---- Reset ---- */
