@@ -3,6 +3,10 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+// Only Neon needs these to differ (pooled for the app, direct for migrations).
+// Everywhere else one URL serves both, so DIRECT_URL stays optional.
+process.env.DIRECT_URL ||= process.env.DATABASE_URL;
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {

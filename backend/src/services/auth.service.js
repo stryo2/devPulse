@@ -31,7 +31,7 @@ export const registerUser = async (email, password) => {
 
     const token = generateToken(user.id)
 
-    console.log("User registered successfully:", email)
+    console.log("User registered successfully:", user.id)
 
     return {
       user: {
@@ -87,7 +87,7 @@ export const loginUser = async (email, password) => {
 
     const token = generateToken(user.id)
 
-    console.log("User logged in successfully:", email)
+    console.log("User logged in successfully:", user.id)
 
     return {
       token,

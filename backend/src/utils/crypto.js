@@ -1,17 +1,10 @@
 import crypto from "crypto"
+import { env } from "../config/env.js"
 
 const algorithm = "aes-256-cbc"
-const secretKey = process.env.ENCRYPTION_KEY
 
-if (!secretKey) {
-  throw new Error("ENCRYPTION_KEY environment variable is not set")
-}
-
-if (secretKey.length !== 64) {
-  throw new Error(
-    `ENCRYPTION_KEY must be 32 bytes (64 hex characters), got ${secretKey.length}`
-  )
-}
+// Validated at boot in config/env.js.
+const secretKey = env.ENCRYPTION_KEY
 
 export const encrypt = (text) => {
   try {

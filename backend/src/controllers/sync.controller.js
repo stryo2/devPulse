@@ -1,4 +1,5 @@
 import syncQueue from "../queues/sync.queue.js";
+import { enqueueScheduledSyncs } from "../services/sync.service.js";
 
 export const triggerSync = async (req, res) => {
   try {
@@ -26,6 +27,27 @@ export const triggerSync = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Sync failed"
+    })
+  }
+}
+
+/**
+ * Fan-out entrypoint for an external scheduler. Returns as soon as the jobs are
+ * queued — the caller must not wait for every user's platform APIs.
+ */
+export const runAllSyncs = async (req, res) => {
+  try {
+    const { users, submitted } = await enqueueScheduledSyncs()
+
+    console.log(`Cron fan-out: submitted ${submitted} job(s) for ${users} user(s)`)
+
+    return res.status(200).json({ success: true, users, submitted })
+  } catch (error) {
+    console.error("Cron fan-out error:", error.message)
+
+    return res.status(500).json({
+      success: false,
+      message: "Fan-out failed"
     })
   }
 }

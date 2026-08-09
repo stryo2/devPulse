@@ -74,7 +74,7 @@ export class CodeforcesAdapter extends BaseAdapter {
         throw notFound
       }
 
-      console.log(error.message)
+      console.error("Codeforces fetch failed:", error.message)
 
       throw error
 

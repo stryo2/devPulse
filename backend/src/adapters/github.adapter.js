@@ -79,7 +79,7 @@ async getEvents(username, accessToken) {
 
   } catch (error) {
 
-    console.log(error.message)
+    console.error("GitHub fetch failed:", error.message)
     throw error
 
   }

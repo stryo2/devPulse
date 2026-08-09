@@ -153,7 +153,7 @@ export const syncUserActivity = async (userId) => {
       activities
     }
   } catch (error) {
-    console.log(error.message)
+    console.error("Sync failed:", error.message)
     throw error
   }
 }

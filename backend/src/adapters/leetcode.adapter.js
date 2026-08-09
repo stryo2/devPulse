@@ -91,7 +91,7 @@ query userProfile($username: String!) {
         solvedStats: user.submitStats?.acSubmissionNum ?? []
       }
     } catch (error) {
-      console.log(error.message)
+      console.error("LeetCode fetch failed:", error.message)
       throw error
     }
   }
