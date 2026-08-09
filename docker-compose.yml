@@ -1,0 +1,76 @@
+# Local development stack. The frontend stays on the host (`npm run dev`) —
+# Vite HMR through a bind mount on Windows is more trouble than it is worth.
+#
+#   docker compose up --build
+#   docker compose exec api npx prisma migrate deploy
+
+x-backend-env: &backend-env
+  # Service names are hostnames on the compose network, so these differ from
+  # the host .env. Values here override anything in env_file.
+  DATABASE_URL: postgresql://devpulse:devpulse@postgres:5432/devpulse
+  DIRECT_URL: postgresql://devpulse:devpulse@postgres:5432/devpulse
+  REDIS_URL: redis://redis:6379
+  PORT: 3000
+  FRONTEND_URL: http://localhost:5173
+  CORS_ORIGINS: http://localhost:5173
+  CRON_SECRET: dev-cron-secret
+  # Bind mounts on Windows do not deliver inotify events to the container.
+  CHOKIDAR_USEPOLLING: "true"
+
+x-backend-base: &backend-base
+  build: ./backend
+  # Supplies the secrets that are not safe to hardcode here.
+  env_file: ./backend/.env
+  environment: *backend-env
+  volumes:
+    - ./backend:/app
+    # Keeps the host's Windows-built node_modules from shadowing the linux one.
+    - /app/node_modules
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: devpulse
+      POSTGRES_PASSWORD: devpulse
+      POSTGRES_DB: devpulse
+    ports:
+      # 5433: the host already runs Postgres on 5432.
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devpulse -d devpulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    # Mirrors Upstash: an evicted key in a queue is a lost or corrupted job.
+    command: redis-server --maxmemory-policy noeviction
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    <<: *backend-base
+    command: npm run dev
+    ports:
+      - "3000:3000"
+
+  worker:
+    <<: *backend-base
+    command: npm run worker:dev
+
+volumes:
+  postgres-data:
