@@ -4,7 +4,7 @@
 |---|---|
 | Frontend (Vercel) | https://dev-pulse-lake.vercel.app |
 | Backend (Render) | https://devpulse-api-ly4m.onrender.com |
-| Database | Neon · AWS `ap-southeast-1` |
+| Database | Neon · PostgreSQL 18.4 · AWS `ap-southeast-1` |
 | Queue | Upstash Redis · `ap-southeast-1`, Regional, eviction off |
 
 Both platforms deploy from `main`. All four services live in Singapore.
@@ -96,7 +96,55 @@ provisioning cloud resources, and again after each deployment milestone.
 
 ## Environment variables
 
-`backend/.env.example` is the authoritative list. Deployment-specific values:
+`backend/.env.example` is the authoritative list.
+
+### Required
+
+Validated at boot — both the API and the worker exit immediately if any is missing, rather than
+failing on the first request that needs it.
+
+| Variable | Description | Example |
+|---|---|---|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/devpulse` |
+| `JWT_SECRET` | Signing secret for session tokens and OAuth state | `a-long-random-string` |
+| `GITHUB_CLIENT_ID` | GitHub OAuth App client ID | `Ov23li...` |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth App client secret | 40-char hex |
+| `ENCRYPTION_KEY` | AES-256 key for tokens at rest — **exactly 64 hex chars** | `4f8c...` (32 bytes) |
+| `API_BASE_URL` | Public base URL of the API, used to build the OAuth callback | `http://localhost:3000` |
+
+Generate a valid encryption key:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### Optional
+
+| Variable | Default | Description |
+|---|---|---|
+| `NODE_ENV` | `development` | Enables production logging format |
+| `PORT` | `3000` | API listen port |
+| `DIRECT_URL` | falls back to `DATABASE_URL` | Non-pooled URL used only by `prisma migrate` |
+| `FRONTEND_URL` | `http://localhost:5173` | Where the OAuth callback redirects on success |
+| `REDIS_URL` | built from host/port | Full Redis URL; `rediss://` enables TLS |
+| `REDIS_HOST` | `127.0.0.1` | Legacy local fallback, ignored when `REDIS_URL` is set |
+| `REDIS_PORT` | `6379` | Legacy local fallback |
+| `CORS_ORIGINS` | `FRONTEND_URL` | Comma-separated exact browser origins |
+| `CORS_PREVIEW_PATTERN` | unset | Regex for ephemeral preview origins |
+| `CRON_SECRET` | unset | Shared secret for `/api/sync/run-all`; unset means the endpoint refuses everything |
+| `RUN_WORKER_IN_PROCESS` | `false` | Run the BullMQ worker inside the API process |
+| `SYNC_WORKER_CONCURRENCY` | `5` | Jobs processed simultaneously |
+| `SYNC_SCHEDULE_ENABLED` | `true` | `false` removes the scheduler from Redis |
+| `SYNC_SCHEDULE_CRON` | `0 */6 * * *` | Cron pattern for the fan-out tick |
+| `SYNC_SCHEDULE_TIMEZONE` | `UTC` | Timezone the cron pattern is evaluated in |
+| `SYNC_FANOUT_BATCH_SIZE` | `500` | Users enqueued per `addBulk` batch |
+
+> An invalid `SYNC_SCHEDULE_CRON` makes the worker **exit on startup** by design — a worker that
+> silently never schedules anything is far harder to notice than a crash.
+
+Frontend: `VITE_API_BASE_URL` only, documented in `frontend/.env.example`.
+
+### Deployment-specific values
 
 | Variable | Local | Render (production) |
 |---|---|---|
@@ -214,12 +262,16 @@ touching the API.
 No alerting exists on free tier — outages are discovered by visiting the site.
 Check these monthly:
 
-| Where | What | Baseline (2026-08-16) |
-|---|---|---|
-| Render dashboard | instance-hours of 750 | one service, ~720 if always on |
-| Upstash console | commands of 500k | 1,525 (0.3%) |
-| Neon console | storage of 0.5 GB | 7.8 MB |
-| Neon console | CU-hours of 100 | — |
+| Where | What |
+|---|---|
+| Render dashboard | instance-hours against 750/mo |
+| Upstash console | commands against 500k/mo |
+| Neon console | storage against 0.5 GB |
+| Neon console | CU-hours against 100/mo |
+
+Read command usage from the **Upstash console**, not from Redis `INFO stats` —
+`total_commands_processed` is not a cumulative monthly figure and has been
+observed to decrease between reads.
 
 Quick health check:
 
