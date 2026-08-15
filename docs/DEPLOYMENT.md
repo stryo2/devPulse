@@ -1,6 +1,15 @@
 # DevPulse — Deployment
 
-Target stack (all free tier): **Vercel** (frontend) · **Render** (backend) ·
+| | URL |
+|---|---|
+| Frontend (Vercel) | https://dev-pulse-lake.vercel.app |
+| Backend (Render) | https://devpulse-api-ly4m.onrender.com |
+| Database | Neon · AWS `ap-southeast-1` |
+| Queue | Upstash Redis · `ap-southeast-1`, Regional, eviction off |
+
+Both platforms deploy from `main`. All four services live in Singapore.
+
+Stack (all free tier): **Vercel** (frontend) · **Render** (backend) ·
 **Neon** (Postgres) · **Upstash** (Redis) · **GitHub Actions** (CI + scheduling).
 
 Render's free tier has no background-worker service and no cron, so:
@@ -111,6 +120,32 @@ Two coupling rules that break things silently when violated:
    callback URL. GitHub matches `redirect_uri` byte for byte.
 2. `ENCRYPTION_KEY` cannot be rotated without invalidating every stored GitHub
    token — users would have to reconnect.
+
+---
+
+## Gotchas that cost time
+
+**GitHub OAuth App: leave "Expire user access tokens" unchecked.** GitHub's
+newer UI enables it by default. The code stores only `access_token` and has no
+refresh logic, so tokens would expire ~8h after a user connects and every sync
+would 401 until they reconnected.
+
+**`VITE_API_BASE_URL` is baked in at build time.** Setting it on Vercel does
+nothing until a rebuild. A deployment missing it silently ships a bundle
+pointing at localhost — `http.js` logs a warning in that case.
+
+**Vercel's "Redeploy" reuses that deployment's commit.** Changing the
+production branch does not retroactively apply; push a new commit instead.
+
+**Render env vars are literal.** Quotes pasted around a value become part of
+it, which silently breaks `CORS_ORIGINS` matching.
+
+**Render snapshots env vars when a build starts.** Variables saved mid-build
+apply only to the next deploy.
+
+**`prisma` lives in `dependencies`, not `devDependencies`.** Render sets
+`NODE_ENV=production`, so `npm ci` skips devDependencies and the `postinstall`
+`prisma generate` would fail with the CLI missing.
 
 ---
 
