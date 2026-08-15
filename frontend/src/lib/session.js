@@ -44,9 +44,3 @@ export const isTokenValid = (token) => {
 }
 
 export const hasValidSession = () => isTokenValid(getToken())
-
-// Deliberate lint error to verify CI blocks merges. Reverted in the next commit.
-export const ciCanary = () => {
-  const unusedVariable = 42
-  return "ci-canary"
-}
