@@ -108,7 +108,7 @@ provisioning cloud resources, and again after each deployment milestone.
 | `API_BASE_URL` | `http://localhost:3000` | `https://<service>.onrender.com` — no trailing slash |
 | `FRONTEND_URL` | `http://localhost:5173` | the Vercel URL |
 | `CORS_ORIGINS` | `http://localhost:5173` | the Vercel URL |
-| `CORS_PREVIEW_PATTERN` | unset | `^https://<project>-[a-z0-9-]+\.vercel\.app$` |
+| `CORS_PREVIEW_PATTERN` | unset | `^https://dev-pulse-[a-z0-9-]+-stryos-projects\.vercel\.app$` — anchored on the account slug so another user's `dev-pulse-*` project cannot match |
 | `RUN_WORKER_IN_PROCESS` | `false` | `true` |
 | `SYNC_SCHEDULE_ENABLED` | `true` | `false` — Actions owns scheduling |
 | `SYNC_WORKER_CONCURRENCY` | `5` | `2` |
@@ -159,3 +159,76 @@ apply only to the next deploy.
 | Neon | 0.5 GB storage | `ActivitySnapshot` grows forever; needs a retention policy |
 | Upstash | 500k commands/mo | BullMQ defaults alone exceed this — `drainDelay` is set to 60s for this reason |
 | Vercel | Hobby is non-commercial | must upgrade if the project ever earns money |
+
+---
+
+## Architecture
+
+```
+                 browser
+                    |
+                    v
+      Vercel  (static SPA, VITE_API_BASE_URL baked in at build)
+                    |  https + CORS allowlist
+                    v
+      Render  (single free web service)
+        |-- Express API
+        `-- BullMQ worker, in-process (RUN_WORKER_IN_PROCESS=true)
+             |                    |
+             v                    v
+      Neon Postgres         Upstash Redis
+      (pooled + direct)     (queue only, TLS)
+
+      GitHub Actions --POST /api/sync/run-all--> Render
+      every 6h, Bearer CRON_SECRET; wakes the service and fans out
+```
+
+GitHub OAuth is a three-legged redirect: the browser goes to GitHub, GitHub
+redirects to the **API** callback, and the API redirects the browser to
+`FRONTEND_URL/dashboard`. The frontend owns no callback route.
+
+---
+
+## Rollback
+
+**Backend (Render)** — Deploys tab, *Rollback to previous deploy*. Instant, no
+rebuild. Env-var mistakes: edit the value and redeploy.
+
+**Frontend (Vercel)** — Deployments, pick an older one, *Promote to Production*.
+Instant. Note `VITE_API_BASE_URL` is baked in at build time, so promoting an old
+deployment also restores whatever API URL it was built with.
+
+**Database** — migrations are forward-only here. Roll the code back, then write a
+new corrective migration. Never hand-edit `_prisma_migrations`.
+
+**Queue** — jobs are idempotent per user and deduplicated, so replaying is safe.
+To drain a stuck queue, delete the `bull:devpulse-sync:*` keys in Upstash.
+
+The two platforms are versioned independently: a bad frontend never requires
+touching the API.
+
+---
+
+## Monitoring
+
+No alerting exists on free tier — outages are discovered by visiting the site.
+Check these monthly:
+
+| Where | What | Baseline (2026-08-16) |
+|---|---|---|
+| Render dashboard | instance-hours of 750 | one service, ~720 if always on |
+| Upstash console | commands of 500k | 1,525 (0.3%) |
+| Neon console | storage of 0.5 GB | 7.8 MB |
+| Neon console | CU-hours of 100 | — |
+
+Quick health check:
+
+```bash
+curl https://devpulse-api-ly4m.onrender.com/health/ready
+```
+
+Returns 503 with a per-dependency breakdown when Postgres or Redis is unreachable.
+`/health` is liveness only and deliberately performs no I/O.
+
+Free tiers fail quietly and suddenly — there is no warning before writes start
+being rejected.

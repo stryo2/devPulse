@@ -130,8 +130,19 @@ exact regardless of how many rows a user accumulates.
 
 ### Deployment
 
-Not yet configured — DevPulse currently runs locally. Containerization and a hosted deployment are
-tracked in [Future Improvements](#future-improvements).
+Live, on a fully free-tier stack:
+
+| Component | Host |
+|-----------|------|
+| Frontend  | [Vercel](https://dev-pulse-lake.vercel.app) |
+| API + worker | [Render](https://devpulse-api-ly4m.onrender.com) |
+| PostgreSQL | Neon (`ap-southeast-1`) |
+| Redis     | Upstash (`ap-southeast-1`) |
+| CI + scheduling | GitHub Actions |
+
+Render's free tier has no background-worker service and no cron, so the BullMQ worker runs inside
+the API process and a scheduled workflow drives the periodic fan-out. See
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the runbook, environment matrix and rollback steps.
 
 ---
 
@@ -307,9 +318,9 @@ npx prisma migrate deploy   # apply existing migrations
 npx prisma generate         # generate the client
 ```
 
-> The frontend currently points at `http://localhost:3000/api`, hardcoded in
-> [`frontend/src/api/http.js`](frontend/src/api/http.js). Change it there if your backend runs
-> elsewhere.
+> The frontend reads its API base URL from `VITE_API_BASE_URL`, falling back to
+> `http://localhost:3000/api`. See [`frontend/.env.example`](frontend/.env.example). Vite inlines
+> the value at build time, so changing it requires a rebuild.
 
 ---
 
@@ -593,10 +604,12 @@ is what makes a frequent schedule safe.
       from user inactivity.
 - [ ] **Job status endpoint** — the dashboard currently polls on a fixed delay after triggering a sync.
 - [ ] **Automated tests** — unit coverage for the analytics pure functions and adapter normalizers.
-- [ ] **Dockerized setup** — `docker-compose` for Postgres, Redis, API, worker and frontend.
-- [ ] **CI pipeline** — lint, build and migration checks on every push.
-- [ ] **Production deployment** — hosted API, worker and frontend with environment-driven config.
-- [ ] **Configurable frontend API URL** — replace the hardcoded `localhost:3000` base URL.
+- [x] **Dockerized setup** — `docker-compose` for Postgres, Redis, API and worker.
+- [x] **CI pipeline** — lint, build and schema checks on every pull request.
+- [x] **Production deployment** — hosted API, worker and frontend with environment-driven config.
+- [x] **Configurable frontend API URL** — driven by `VITE_API_BASE_URL`.
+- [ ] **Activity retention** — `ActivitySnapshot` grows unbounded; Neon's free tier caps at 0.5 GB.
+- [ ] **Structured logging** — replace `console.*` with a real logger and request ids.
 - [ ] **Token refresh and disconnect** — let users revoke or re-authorize a platform from the UI.
 - [ ] **Additional platforms** — GitLab, HackerRank, Stack Overflow.
 
