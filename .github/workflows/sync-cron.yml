@@ -1,0 +1,24 @@
+name: Scheduled sync
+
+# Render's free tier has no cron and sleeps after ~15min idle, so this request
+# both wakes the service and triggers the fan-out.
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger sync fan-out
+        run: |
+          curl --fail-with-body -sS -X POST \
+            "${{ secrets.API_BASE_URL }}/api/sync/run-all" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 180 \
+            --retry 3 --retry-delay 20 --retry-connrefused \
+            -w '\nHTTP %{http_code} in %{time_total}s\n'
