@@ -2,8 +2,7 @@ import pkg from "@prisma/client";
 
 const { PrismaClient } = pkg;
 
-// nodemon re-imports this module on every restart; without the global each
-// restart would leak another connection pool.
+// Without the global, every nodemon restart leaks a connection pool.
 const globalForPrisma = globalThis;
 
 const prisma =

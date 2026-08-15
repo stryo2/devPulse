@@ -53,8 +53,7 @@ const server = app.listen(PORT, () => {
   console.log(`API Base URL: ${process.env.API_BASE_URL}`)
 })
 
-// Opt-in, for hosts that cannot run a separate worker process. Scheduling is
-// GitHub Actions' job, so no registerSyncSchedule() here.
+// For hosts without a separate worker process. GitHub Actions owns scheduling.
 if (env.RUN_WORKER_IN_PROCESS) {
   createSyncWorker()
 }

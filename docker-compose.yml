@@ -1,12 +1,7 @@
-# Local development stack. The frontend stays on the host (`npm run dev`) —
-# Vite HMR through a bind mount on Windows is more trouble than it is worth.
-#
-#   docker compose up --build
-#   docker compose exec api npx prisma migrate deploy
+# Local development stack. The frontend runs on the host.
 
 x-backend-env: &backend-env
-  # Service names are hostnames on the compose network, so these differ from
-  # the host .env. Values here override anything in env_file.
+  # Service names are hostnames here, so these override the host .env.
   DATABASE_URL: postgresql://devpulse:devpulse@postgres:5432/devpulse
   DIRECT_URL: postgresql://devpulse:devpulse@postgres:5432/devpulse
   REDIS_URL: redis://redis:6379
@@ -14,17 +9,16 @@ x-backend-env: &backend-env
   FRONTEND_URL: http://localhost:5173
   CORS_ORIGINS: http://localhost:5173
   CRON_SECRET: dev-cron-secret
-  # Bind mounts on Windows do not deliver inotify events to the container.
+  # Windows bind mounts do not deliver inotify events.
   CHOKIDAR_USEPOLLING: "true"
 
 x-backend-base: &backend-base
   build: ./backend
-  # Supplies the secrets that are not safe to hardcode here.
   env_file: ./backend/.env
   environment: *backend-env
   volumes:
     - ./backend:/app
-    # Keeps the host's Windows-built node_modules from shadowing the linux one.
+    # Stops the host's Windows-built node_modules shadowing the linux one.
     - /app/node_modules
   depends_on:
     postgres:
@@ -52,7 +46,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    # Mirrors Upstash: an evicted key in a queue is a lost or corrupted job.
+    # Mirrors Upstash; an evicted key is a lost job.
     command: redis-server --maxmemory-policy noeviction
     ports:
       - "6380:6379"

@@ -1,13 +1,11 @@
 import crypto from "crypto"
 import { env } from "../config/env.js"
 
-// Hashing first gives timingSafeEqual two equal-length buffers and avoids
-// leaking the secret's length through a length check.
+// Equal-length buffers for timingSafeEqual, without leaking the secret's length.
 const digest = (value) => crypto.createHash("sha256").update(value).digest()
 
 const cronAuth = (req, res, next) => {
-  // Unset secret denies rather than allows — an unconfigured deploy must not
-  // leave this endpoint open.
+  // Unset secret must deny, never open.
   if (!env.CRON_SECRET) {
     return res.status(503).json({
       success: false,

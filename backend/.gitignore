@@ -2,4 +2,6 @@
 /src/generated/prisma
 node_modules
 .env
+.env.*
+!.env.example
 .e2e-logs

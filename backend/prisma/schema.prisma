@@ -4,8 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Pooled connection for the app; migrations need a direct one because
-  // PgBouncer's transaction mode cannot hold advisory locks.
+  // Pooled for the app; migrations need the direct url for advisory locks.
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }

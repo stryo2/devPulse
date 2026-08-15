@@ -4,8 +4,7 @@ import redis from "../lib/redis.js"
 
 const router = Router()
 
-// Liveness only, deliberately no I/O: Neon autosuspends after ~5min idle, so a
-// query here would keep it awake and burn the free CU quota.
+// No I/O on purpose: a query here would keep Neon awake and burn its CU quota.
 router.get("/", (req, res) => {
   res.json({ status: "ok", uptime: process.uptime() })
 })

@@ -9,8 +9,7 @@ import {
 } from "../services/sync.service.js";
 
 export const processSyncJob = async (job) => {
-  // The scheduled tick carries no userId — it fans out into per-user jobs that
-  // re-enter through the branch below.
+  // The scheduled tick has no userId; it fans out into per-user jobs.
   if (job.name === SYNC_ALL_JOB_NAME) {
     const { users, submitted } = await enqueueScheduledSyncs();
 
@@ -21,8 +20,7 @@ export const processSyncJob = async (job) => {
     return;
   }
 
-  // Return rather than throw: an unrecognised job is a routing mistake, and
-  // retrying it cannot fix that.
+  // Return, not throw: retrying cannot fix a routing mistake.
   if (job.name !== "sync-user") {
     console.warn(`Ignoring unrecognised job name: ${job.name}`);
 
@@ -46,9 +44,7 @@ export const createSyncWorker = () => {
   worker = new Worker(SYNC_QUEUE_NAME, processSyncJob, {
     connection: redis,
     concurrency: env.SYNC_WORKER_CONCURRENCY,
-    // An idle worker blocks on Redis for drainDelay seconds at a time. The
-    // default of 5 costs ~518k commands/month, over Upstash's free quota by
-    // itself. Queued jobs still wake it immediately, so this adds no latency.
+    // Default 5s would exceed Upstash's free quota while idle.
     drainDelay: 60,
     stalledInterval: 300000,
   });

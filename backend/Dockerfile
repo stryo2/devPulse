@@ -6,7 +6,7 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-# Schema and config first: postinstall runs `prisma generate`, which needs them.
+# Schema first: postinstall runs prisma generate.
 COPY package*.json ./
 COPY prisma.config.ts ./
 COPY prisma ./prisma
