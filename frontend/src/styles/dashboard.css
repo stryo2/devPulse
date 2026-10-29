@@ -746,28 +746,6 @@
   right: var(--space-5);
 }
 
-.auth__card {
-  width: 100%;
-  max-width: 380px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  box-shadow: var(--shadow-md);
-}
-
-.auth__title {
-  font-size: var(--fs-xl);
-  text-align: center;
-}
-
-.auth__subtitle {
-  font-size: var(--fs-base);
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: var(--space-2);
-}
-
 .auth__form {
   display: flex;
   flex-direction: column;
@@ -775,11 +753,274 @@
   margin-top: var(--space-6);
 }
 
-.auth__footer {
-  text-align: center;
-  font-size: var(--fs-base);
+/* ============================= Split auth (login + sign-up) ============================= */
+
+/* Two panes in one card: illustration left, form right. The art pane drops
+   away on narrow screens so the form is never squeezed. */
+.auth-split {
+  width: 100%;
+  max-width: 880px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-split__form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-12) var(--space-8);
+}
+
+.auth-split__title {
+  font-size: var(--fs-2xl);
+  letter-spacing: -0.02em;
+}
+
+.auth-split__subtitle {
+  font-size: var(--fs-md);
   color: var(--text-muted);
+  margin-top: var(--space-2);
+}
+
+.auth-split__subtitle a {
+  font-weight: var(--fw-medium);
+}
+
+.auth-split .alert {
   margin-top: var(--space-5);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--border);
+}
+
+.auth-split .auth__form {
+  margin-top: var(--space-8);
+}
+
+/* flex: none — the base .input grows to fill filter rows, which inside a
+   column-direction .field would stretch it vertically. */
+.input--lg {
+  flex: none;
+  height: 42px;
+  padding: 0 var(--space-4);
+  background: var(--bg-subtle);
+  border-color: transparent;
+}
+
+.input--lg:hover {
+  border-color: var(--border-strong);
+}
+
+.input--lg:focus {
+  background: var(--bg-surface);
+}
+
+.btn--lg {
+  height: 42px;
+  margin-top: var(--space-2);
+}
+
+/* Input with a trailing icon button inside it (password reveal). */
+.input-affix {
+  position: relative;
+  display: flex;
+}
+
+.input-affix .input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.input-affix__btn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color var(--transition),
+    background var(--transition);
+}
+
+.input-affix__btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+
+.auth-split__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.auth-split__divider::before,
+.auth-split__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-split__platforms {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.auth-split__platforms li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+}
+
+.auth-split__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+/* ---- Illustration pane ---- */
+
+.auth-art {
+  /* Light: dawn sky. */
+  --art-sky-top: #c9bcff;
+  --art-sky-mid: #e3dbff;
+  --art-sky-low: #f6e8ff;
+  --art-glow: rgba(255, 255, 255, 0.85);
+  --art-moon: #ffffff;
+  --art-stars: rgba(255, 255, 255, 0);
+  --art-ridge-1: #b7a5fb;
+  --art-ridge-2: #9479f5;
+  --art-ridge-3: #6a4ad9;
+  --art-ridge-4: #3f2694;
+  --art-pulse: rgba(255, 255, 255, 0.55);
+
+  position: relative;
+  overflow: hidden;
+  min-height: 520px;
+  border-radius: 14px;
+  background: var(--art-sky-mid);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .auth-art {
+    --art-sky-top: #120c2e;
+    --art-sky-mid: #2a1a66;
+    --art-sky-low: #5b34c9;
+    --art-glow: rgba(196, 170, 255, 0.35);
+    --art-moon: #efe9ff;
+    --art-stars: rgba(255, 255, 255, 0.8);
+    --art-ridge-1: #4a2aa8;
+    --art-ridge-2: #33197c;
+    --art-ridge-3: #221058;
+    --art-ridge-4: #140a36;
+    --art-pulse: rgba(196, 170, 255, 0.5);
+  }
+}
+
+:root[data-theme='dark'] .auth-art {
+  --art-sky-top: #120c2e;
+  --art-sky-mid: #2a1a66;
+  --art-sky-low: #5b34c9;
+  --art-glow: rgba(196, 170, 255, 0.35);
+  --art-moon: #efe9ff;
+  --art-stars: rgba(255, 255, 255, 0.8);
+  --art-ridge-1: #4a2aa8;
+  --art-ridge-2: #33197c;
+  --art-ridge-3: #221058;
+  --art-ridge-4: #140a36;
+  --art-pulse: rgba(196, 170, 255, 0.5);
+}
+
+.auth-art__scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.auth-art__sky-top { stop-color: var(--art-sky-top); }
+.auth-art__sky-mid { stop-color: var(--art-sky-mid); }
+.auth-art__sky-low { stop-color: var(--art-sky-low); }
+.auth-art__glow-in { stop-color: var(--art-glow); }
+.auth-art__glow-out { stop-color: var(--art-glow); stop-opacity: 0; }
+.auth-art__moon { fill: var(--art-moon); }
+.auth-art__stars { fill: var(--art-stars); }
+.auth-art__ridge-1 { fill: var(--art-ridge-1); }
+.auth-art__ridge-2 { fill: var(--art-ridge-2); }
+.auth-art__ridge-3 { fill: var(--art-ridge-3); }
+.auth-art__ridge-4 { fill: var(--art-ridge-4); }
+
+.auth-art__pulse {
+  fill: none;
+  stroke: var(--art-pulse);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Sits on the darkest ridge in both themes, so white text keeps its contrast. */
+.auth-art__caption {
+  position: absolute;
+  left: var(--space-6);
+  right: var(--space-6);
+  bottom: var(--space-6);
+  color: #fff;
+}
+
+.auth-art__brand {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.01em;
+}
+
+.auth-art__tagline {
+  margin-top: var(--space-1);
+  font-size: var(--fs-base);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+@media (max-width: 760px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+  }
+
+  .auth-art {
+    display: none;
+  }
+
+  .auth-split__form {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .auth-split__platforms li {
+    gap: 6px;
+    font-size: var(--fs-sm);
+  }
 }

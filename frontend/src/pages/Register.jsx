@@ -4,6 +4,8 @@ import { Link } from "react-router-dom"
 import http from "../api/http"
 import { clearToken, setToken } from "../lib/session"
 import ThemeToggle from "../components/ThemeToggle"
+import AuthArt from "../components/AuthArt"
+import EyeIcon from "../components/EyeIcon"
 import "../styles/dashboard.css"
 
 function Register() {
@@ -12,6 +14,7 @@ function Register() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -51,55 +54,83 @@ function Register() {
         <ThemeToggle />
       </div>
 
-      <div className="auth__card">
+      <div className="auth-split">
 
-        <h1 className="auth__title">Create your account</h1>
-        <p className="auth__subtitle">
-          Track your activity across GitHub, LeetCode and Codeforces
-        </p>
+        <AuthArt />
 
-        {error ? <div className="alert">{error}</div> : null}
+        <div className="auth-split__form">
 
-        <form className="auth__form" onSubmit={handleRegister}>
+          <h1 className="auth-split__title">Create an account</h1>
+          <p className="auth-split__subtitle">
+            Already have an account? <Link to="/">Log in</Link>
+          </p>
 
-          <div className="field">
-            <label className="field__label" htmlFor="register-email">
-              Email
-            </label>
-            <input
-              id="register-email"
-              className="input"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+          {error ? <div className="alert">{error}</div> : null}
+
+          <form className="auth__form" onSubmit={handleRegister}>
+
+            <div className="field">
+              <label className="field__label" htmlFor="register-email">
+                Email
+              </label>
+              <input
+                id="register-email"
+                className="input input--lg"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="field">
+              <label className="field__label" htmlFor="register-password">
+                Password
+              </label>
+              <div className="input-affix">
+                <input
+                  id="register-password"
+                  className="input input--lg"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  placeholder="At least 6 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="input-affix__btn"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  <EyeIcon crossed={showPassword} />
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn--primary btn--block btn--lg"
+              disabled={loading}
+            >
+              {loading ? "Creating account…" : "Create account"}
+            </button>
+
+          </form>
+
+          <div className="auth-split__divider">
+            <span>Connect after sign-up</span>
           </div>
 
-          <div className="field">
-            <label className="field__label" htmlFor="register-password">
-              Password
-            </label>
-            <input
-              id="register-password"
-              className="input"
-              type="password"
-              placeholder="At least 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+          <ul className="auth-split__platforms">
+            <li><span className="auth-split__dot dot--github" />GitHub</li>
+            <li><span className="auth-split__dot dot--leetcode" />LeetCode</li>
+            <li><span className="auth-split__dot dot--codeforces" />Codeforces</li>
+          </ul>
 
-          <button type="submit" className="btn btn--primary btn--block" disabled={loading}>
-            {loading ? "Creating account…" : "Create account"}
-          </button>
-
-        </form>
-
-        <p className="auth__footer">
-          Already have an account? <Link to="/">Sign in</Link>
-        </p>
-
+        </div>
       </div>
     </div>
   )
